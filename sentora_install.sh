@@ -1036,6 +1036,7 @@ if [[ "$OS" = "CentOs" ]]; then
     PHP_EXT_PATH="/etc/php.d"
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+	$PACKAGE_INSTALLER libpcre2-dev
 	$PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl php php-dev php5.6-dev
 	update-alternatives --set php /usr/bin/php5.6
 	update-alternatives --set phar /usr/bin/phar5.6
