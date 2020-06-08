@@ -727,7 +727,7 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	# https://dev.mysql.com/downloads/
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" | /usr/bin/debconf-set-selections
-	echo "mysql-apt-config mysql-apt-config/repo-codename   select $(lsb_release -sc)" | /usr/bin/debconf-set-selections
+	echo "mysql-apt-config mysql-apt-config/repo-codename select $(lsb_release -sc)" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/select-tools select" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/select-server select mysql-5.7" | /usr/bin/debconf-set-selections
