@@ -361,7 +361,7 @@ fi
 echo -e "\n-- Updating repositories and packages sources"
 if [[ "$OS" = "CentOs" ]]; then
 #EPEL Repo Install
-$PACKAGE_INSTALLER -y install epel-release*.rpm
+$PACKAGE_INSTALLER -y install epel-release
 
     #To fix some problems of compatibility use of mirror centos.org to all users
     #Replace all mirrors by base repos to avoid any problems.
