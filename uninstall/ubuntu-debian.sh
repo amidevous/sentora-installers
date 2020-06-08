@@ -113,7 +113,7 @@ apt-get -y purge php5
 apt-get -y purge php5-*
 apt-get -y purge php
 apt-get -y purge php-*
-rm -rf /etc/php/ /etc/php5/ /etc/apache2/
+rm -rf /etc/php/ /etc/php5/ /etc/apache2/ /var/lib/php/modules /usr/lib/php
 #proftpd uninstall and purge packages and config
 apt-get -y purge proftpd-mod-mysql
 apt-get -y purge proftpd-*
