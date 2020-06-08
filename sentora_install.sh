@@ -730,7 +730,7 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	export DEBIAN_FRONTEND=noninteractive
 	wget https://dev.mysql.com/get/mysql-apt-config_0.8.14-1_all.deb
 	dpkg -i mysql-apt-config_0.8.14-1_all.deb
-	rmm -f mysql-apt-config_0.8.14-1_all.deb
+	rm -f mysql-apt-config_0.8.14-1_all.deb
 	else
     export DEBIAN_FRONTEND=noninteractive
 	fi
