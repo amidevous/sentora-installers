@@ -1,0 +1,83 @@
+diff --git a/modules/ssl/ssl_engine_config.c b/modules/ssl/ssl_engine_config.c
+index 15993f1..53ed6f1 100644
+--- a/modules/ssl/ssl_engine_config.c
++++ b/modules/ssl/ssl_engine_config.c
+@@ -55,6 +55,7 @@ SSLModConfigRec *ssl_config_global_create(server_rec *s)
+     mc = (SSLModConfigRec *)apr_palloc(pool, sizeof(*mc));
+     mc->pPool = pool;
+     mc->bFixed = FALSE;
++    mc->sni_required = FALSE;
+ 
+     /*
+      * initialize per-module configuration
+diff --git a/modules/ssl/ssl_engine_init.c b/modules/ssl/ssl_engine_init.c
+index bf1f0e4..a7523de 100644
+--- a/modules/ssl/ssl_engine_init.c
++++ b/modules/ssl/ssl_engine_init.c
+@@ -409,7 +409,7 @@
+     /*
+      * Configuration consistency checks
+      */
+-    if ((rv = ssl_init_CheckServers(base_server, ptemp)) != APR_SUCCESS) {
++    if ((rv = ssl_init_CheckServers(mc, base_server, ptemp)) != APR_SUCCESS) {
+         return rv;
+     }
+ 
+@@ -1475,7 +1475,7 @@
+     return APR_SUCCESS;
+ }
+ 
+-apr_status_t ssl_init_CheckServers(server_rec *base_server, apr_pool_t *p)
++apr_status_t ssl_init_CheckServers(SSLModConfigRec *mc, server_rec *base_server, apr_pool_t *p)
+ {
+     server_rec *s;
+     SSLSrvConfigRec *sc;
+@@ -1557,6 +1557,7 @@
+     }
+ 
+     if (conflict) {
++        mc->sni_required = TRUE;
+         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, base_server, APLOGNO(01917)
+                      "Init: Name-based SSL virtual hosts require "
+                      "an OpenSSL version with support for TLS extensions "
+diff --git a/modules/ssl/ssl_engine_kernel.c b/modules/ssl/ssl_engine_kernel.c
+index bc9e26b..2460f01 100644
+--- a/modules/ssl/ssl_engine_kernel.c
++++ b/modules/ssl/ssl_engine_kernel.c
+@@ -164,6 +164,7 @@
+         server_rec *handshakeserver = sslconn->server;
+         SSLSrvConfigRec *hssc = mySrvConfig(handshakeserver);
+ 
++        if (myModConfig(r->server)->sni_required) {
+         if ((servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name))) {
+             /*
+              * The SNI extension supplied a hostname. So don't accept requests
+@@ -206,6 +207,7 @@
+                            "which is required to access this server.<br />\n");
+             return HTTP_FORBIDDEN;
+         }
++        }
+     }
+ #endif
+     modssl_set_app_data2(ssl, r);
+diff --git a/modules/ssl/ssl_private.h b/modules/ssl/ssl_private.h
+index 75fc0e3..31dbfa9 100644
+--- a/modules/ssl/ssl_private.h
++++ b/modules/ssl/ssl_private.h
+@@ -554,6 +554,7 @@ typedef struct {
+     apr_global_mutex_t   *stapling_cache_mutex;
+     apr_global_mutex_t   *stapling_refresh_mutex;
+ #endif
++    BOOL            sni_required;
+ } SSLModConfigRec;
+ 
+ /** Structure representing configured filenames for certs and keys for
+@@ -786,7 +787,7 @@
+ apr_status_t ssl_init_Engine(server_rec *, apr_pool_t *);
+ apr_status_t ssl_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *,
+                                       apr_array_header_t *);
+-apr_status_t ssl_init_CheckServers(server_rec *, apr_pool_t *);
++apr_status_t ssl_init_CheckServers(SSLModConfigRec *mc, server_rec *, apr_pool_t *);
+ STACK_OF(X509_NAME)
+             *ssl_init_FindCAList(server_rec *, apr_pool_t *, const char *, const char *);
+ void         ssl_init_Child(apr_pool_t *, server_rec *);
