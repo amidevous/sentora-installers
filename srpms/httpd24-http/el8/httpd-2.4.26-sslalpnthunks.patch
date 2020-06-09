@@ -1,0 +1,118 @@
+
+Support building against OpenSSL 1.0.1 but using ALPN support from
+OpenSSL 1.0.2 if possible, using the dynamic loader to look up
+symbols at run-time.
+
+--- httpd-2.4.26/modules/ssl/config.m4.sslalpnthunks
++++ httpd-2.4.26/modules/ssl/config.m4
+@@ -49,6 +49,15 @@
+     fi
+ ])
+ 
++AC_ARG_ENABLE(tls-alpn-thunks,
++APACHE_HELP_STRING(--enable-tls-alpn-thunks,Enable support for ALPN thunks in mod_ssl),[
++  if test "$enableval" = "yes"; then
++    AC_DEFINE(HAVE_TLS_ALPN_THUNKS, 1, [Define if support for ALPN thunks is enabled])
++    AC_MSG_NOTICE([Enabled support for  ALPN thunks in mod_ssl])
++  fi
++])
++
++
+ # Ensure that other modules can pick up mod_ssl.h
+ APR_ADDTO(INCLUDES, [-I\$(top_srcdir)/$modpath_current])
+ 
+diff -uap httpd-2.4.26/modules/ssl/mod_ssl.c.sslalpnthunks httpd-2.4.26/modules/ssl/mod_ssl.c
+--- httpd-2.4.26/modules/ssl/mod_ssl.c.sslalpnthunks
++++ httpd-2.4.26/modules/ssl/mod_ssl.c
+@@ -725,6 +725,9 @@
+                               &ssl_authz_provider_verify_client,
+                               AP_AUTH_INTERNAL_PER_CONF);
+ 
++#ifdef HAVE_TLS_ALPN_THUNKS
++    modssl_init_alpn_thunks();
++#endif    
+ }
+ 
+ module AP_MODULE_DECLARE_DATA ssl_module = {
+diff -uap httpd-2.4.26/modules/ssl/ssl_engine_init.c.sslalpnthunks httpd-2.4.26/modules/ssl/ssl_engine_init.c
+--- httpd-2.4.26/modules/ssl/ssl_engine_init.c.sslalpnthunks
++++ httpd-2.4.26/modules/ssl/ssl_engine_init.c
+@@ -47,6 +47,50 @@
+ #define KEYTYPES "RSA or DSA"
+ #endif
+ 
++#ifdef HAVE_TLS_ALPN_THUNKS
++#include <dlfcn.h>
++
++/* During initialization, fetch pointers to OpenSSL functions if
++ * available from the dynamic loader, and store these for later
++ * use. */
++typedef int (ssl_alpn_callback_fn)(SSL *ssl, const unsigned char **out,
++                                   unsigned char *outlen, const unsigned char *in,
++                                   unsigned int inlen, void *arg);
++static void SSL_CTX_set_alpn_select_cb(SSL_CTX *, ssl_alpn_callback_fn *, void *);
++int modssl_SSL_set_alpn_protos(SSL *, unsigned char *, unsigned);
++
++static typeof(SSL_CTX_set_alpn_select_cb) *thunk_set_alpn_select_cb;
++static typeof(modssl_SSL_set_alpn_protos) *thunk_set_alpn_protos;
++
++void modssl_init_alpn_thunks(void)
++{
++    thunk_set_alpn_select_cb = dlsym(RTLD_NEXT, "SSL_CTX_set_alpn_select_cb");
++    thunk_set_alpn_protos = dlsym(RTLD_NEXT, "SSL_set_alpn_protos");
++
++    if (!thunk_set_alpn_select_cb || !thunk_set_alpn_protos) {
++        /* All or nothing... */
++        thunk_set_alpn_select_cb = NULL;
++        thunk_set_alpn_protos = NULL;
++    }
++}
++
++static void SSL_CTX_set_alpn_select_cb(SSL_CTX *ssl, ssl_alpn_callback_fn *cb, void *ud)
++{
++    if (thunk_set_alpn_select_cb)
++        thunk_set_alpn_select_cb(ssl, cb, ud);
++}
++
++int modssl_SSL_set_alpn_protos(SSL *ssl, unsigned char *ps, unsigned plen)
++{
++    if (thunk_set_alpn_protos)
++        return thunk_set_alpn_protos(ssl, ps, plen);
++    else
++        /* Succeed silently; less harmless than failing and logging
++         * warnings. */
++        return 0;           
++}
++#endif /* HAVE_TLS_ALPN_THUNKS */
++
+ #if OPENSSL_VERSION_NUMBER < 0x10100000L
+ /* OpenSSL Pre-1.1.0 compatibility */
+ /* Taken from OpenSSL 1.1.0 snapshot 20160410 */
+diff -uap httpd-2.4.26/modules/ssl/ssl_private.h.sslalpnthunks httpd-2.4.26/modules/ssl/ssl_private.h
+--- httpd-2.4.26/modules/ssl/ssl_private.h.sslalpnthunks
++++ httpd-2.4.26/modules/ssl/ssl_private.h
+@@ -199,6 +199,24 @@
+ #include <openssl/srp.h>
+ #endif
+ 
++#ifdef HAVE_TLS_ALPN_THUNKS
++
++#ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
++#error Cannot enable TLS ALPN thunks if OpenSSL support is present
++#endif
++
++#define TLSEXT_TYPE_application_layer_protocol_negotiation 16
++
++#define SSL_set_alpn_protos(s, p, l) modssl_SSL_set_alpn_protos(s, p, l)
++
++/* Thunk for SSL_set_alpn_protos(). */
++int modssl_SSL_set_alpn_protos(SSL *, unsigned char *, unsigned);
++
++/* Initialize thunks. */
++void modssl_init_alpn_thunks(void);
++
++#endif
++
+ /* ALPN Protocol Negotiation */
+ #if defined(TLSEXT_TYPE_application_layer_protocol_negotiation)
+ #define HAVE_TLS_ALPN
