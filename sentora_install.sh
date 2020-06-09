@@ -1045,6 +1045,9 @@ fi
 #--- PHP
 echo -e "\n-- Installing and configuring PHP"
 if [[ "$OS" = "CentOs" ]]; then
+    if [[ "$VER" == "8" ]]; then
+	$PACKAGE_INSTALLER --enablerepo="PowerTools" libedit-devel
+    fi
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56 php56-runtime php56-php php56-php-devel php56-php-gd php56-php-mbstring php56-php-intl php56-php-mysql php56-php-xml php56-php-xmlrpc
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
     PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
