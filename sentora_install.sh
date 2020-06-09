@@ -71,7 +71,7 @@ ARCH=$(uname -m)
 
 echo "Detected : $OS  $VER  $ARCH"
 
-if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" ) || 
+if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" || "$VER" = "8" ) || 
       "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "14.04" || "$VER" = "16.04" || "$VER" = "18.04" ) || 
       "$OS" = "debian" && ("$VER" = "7" || "$VER" = "8" ) ]] ; then
     echo "Ok."
@@ -116,7 +116,7 @@ if [[ "$OS" = "CentOs" ]] ; then
        rpm -q "$1" &> /dev/null
     }
 
-    if  [[ "$VER" = "7" ]]; then
+    if  [[ "$VER" = "7" || "$VER" = "8" ]]; then
         DB_PCKG="mariadb" &&  echo "DB server will be mariaDB"
     else 
         DB_PCKG="mysql" && echo "DB server will be mySQL"
@@ -393,7 +393,7 @@ $PACKAGE_INSTALLER -y install epel-release
 
     # Stop conflicting services and iptables to ensure all services will work
     # centos  7 using systemctl
-    if  [[ "$VER" = "7" ]]; then
+    if  [[ "$VER" = "7" || "$VER" = "8" ]]; then
         systemctl  stop sendmail.service
         systemctl  disabble sendmail.service
     else 
@@ -402,13 +402,13 @@ $PACKAGE_INSTALLER -y install epel-release
     fi
 
     # disable firewall
-    if  [[ "$VER" = "7" ]]; then
+    if  [[ "$VER" = "7" || "$VER" = "8" ]]; then
         FIREWALL_SERVICE="firewalld"
     else 
         FIREWALL_SERVICE="iptables"
     fi
     # centos  7 using systemctl
-    if  [[ "$VER" = "7" ]]; then
+    if  [[ "$VER" = "7" || "$VER" = "8" ]]; then
         systemctl  save "$FIREWALL_SERVICE".service
         systemctl  stop "$FIREWALL_SERVICE".service
         systemctl  disable "$FIREWALL_SERVICE".service
@@ -749,11 +749,14 @@ fi
 
 #--- MySQL
 echo -e "\n-- Installing MySQL"
+
 $PACKAGE_INSTALLER "$DB_PCKG"
 if [[ "$OS" = "CentOs" ]]; then
-    $PACKAGE_INSTALLER "DB_PCKG-devel" "$DB_PCKG-server" 
+	$PACKAGE_INSTALLER https://rpms.remirepo.net/enterprise/remi-release-$VER.rpm
+	yum --enablerepo="remi,remi-safe" -y update
+    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" "$DB_PCKG-devel" "$DB_PCKG-server" 
     MY_CNF_PATH="/etc/my.cnf"
-    if  [[ "$VER" = "7" ]]; then
+    if  [[ "$VER" = "7" || "$VER" = "8" ]]; then
         DB_SERVICE="mariadb"
     else 
         DB_SERVICE="mysqld"
@@ -932,7 +935,7 @@ if [[ "$OS" = "CentOs" ]]; then
     HTTP_SERVICE="httpd"
     HTTP_USER="apache"
     HTTP_GROUP="apache"
-    if [[ "$VER" = "7" ]]; then
+    if [[ "$VER" = "7" || "$VER" = "8" ]]; then
         # Disable extra modules in centos 7
         disable_file /etc/httpd/conf.modules.d/01-cgi.conf
         disable_file /etc/httpd/conf.modules.d/00-lua.conf
@@ -1010,6 +1013,7 @@ fi
 
 # adjustments for apache 2.4
 if [[ ("$OS" = "CentOs" && "$VER" = "7") || 
+      ("$OS" = "CentOs" && "$VER" = "8") || 
       ("$OS" = "Ubuntu" && "$VER" = "14.04") ||  
       ("$OS" = "Ubuntu" && "$VER" = "16.04") ||  
       ("$OS" = "Ubuntu" && "$VER" = "18.04") || 
@@ -1037,10 +1041,10 @@ fi
 #--- PHP
 echo -e "\n-- Installing and configuring PHP"
 if [[ "$OS" = "CentOs" ]]; then
-    $PACKAGE_INSTALLER php php-devel php-gd php-mbstring php-intl php-mysql php-xml php-xmlrpc
-    $PACKAGE_INSTALLER php-mcrypt php-imap  #Epel packages
-    PHP_INI_PATH="/etc/php.ini"
-    PHP_EXT_PATH="/etc/php.d"
+    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php php56-php-devel php56-php-gd php56-php-mbstring php56-php-intl php56-php-mysql php56-php-xml php56-php-xmlrpc
+    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
+    PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
+    PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	$PACKAGE_INSTALLER libpcre2-dev
@@ -1103,15 +1107,13 @@ sed -i "s|;upload_tmp_dir =|upload_tmp_dir = $PANEL_DATA/temp/|" $PHP_INI_PATH
 sed -i "s|expose_php = On|expose_php = Off|" $PHP_INI_PATH
 
 # Build suhosin for PHP 5.x which is required by Sentora.
-if [[ "$OS" = "CentOs" || "$OS" = "debian" || ( "$OS" = "Ubuntu" && "$VER" = "14.04" || "$VER" == "16.04" || "$VER" == "18.04") ]] ; then
+if [[ "$OS" = "debian" || ( "$OS" = "Ubuntu" && "$VER" = "14.04" || "$VER" == "16.04" || "$VER" == "18.04") ]] ; then
     echo -e "\n# Building suhosin"
-    if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 		if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
         $PACKAGE_INSTALLER php5.6-dev php-dev
 		else
         $PACKAGE_INSTALLER php5-dev
 		fi
-    fi
     SUHOSIN_VERSION="0.9.37.1"
     wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin/archive/$SUHOSIN_VERSION.zip
     unzip -q suhosin.zip
@@ -1123,11 +1125,7 @@ if [[ "$OS" = "CentOs" || "$OS" = "debian" || ( "$OS" = "Ubuntu" && "$VER" = "14
     make install 
     cd ..
     rm -rf suhosin-$SUHOSIN_VERSION
-    if [[ "$OS" = "CentOs" ]]; then 
-        echo 'extension=suhosin.so' > $PHP_EXT_PATH/suhosin.ini
-    elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
-        sed -i 'N;/default extension directory./a\extension=suhosin.so' $PHP_INI_PATH
-    fi	
+    sed -i 'N;/default extension directory./a\extension=suhosin.so' $PHP_INI_PATH	
 fi
 
 # Register apache(+php) service for autostart and start it
