@@ -945,8 +945,8 @@ if [[ "$OS" = "CentOs" ]]; then
         disable_file /etc/httpd/conf.modules.d/00-lua.conf
         disable_file /etc/httpd/conf.modules.d/00-dav.conf
     else
-        disable_file /etc/httpd/conf.d/welcome.conf
-        disable_file /etc/httpd/conf.d/webalizer.conf
+        disable_file $HTTPD_CONFD_PATH/welcome.conf
+        disable_file $HTTPD_CONFD_PATH/webalizer.conf
         # Disable more extra modules in centos 6.x /etc/httpd/httpd.conf dav/ldap/cgi/proxy_ajp
 	    sed -i "s|LoadModule suexec_module modules|#LoadModule suexec_module modules|" "$HTTP_CONF_PATH"
 	    sed -i "s|LoadModule cgi_module modules|#LoadModule cgi_module modules|" "$HTTP_CONF_PATH"
@@ -1052,6 +1052,7 @@ if [[ "$OS" = "CentOs" ]]; then
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
     PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
     PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
+    HTTPD_CONFD_PATH="/etc/httpd/conf.d"
 	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/php -O /usr/bin/php
 	chmod +x /usr/bin/php
 	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phar -O /usr/bin/phar
@@ -1107,7 +1108,7 @@ chmod +t "$PANEL_DATA/sessions"
 
 if [[ "$OS" = "CentOs" ]]; then
     # Remove session & php values from apache that cause override
-    sed -i "/php_value/d" /etc/httpd/conf.d/php.conf
+    sed -i "/php_value/d" $HTTPD_CONFD_PATH/php.conf
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	sed -i "s|;session.save_path = \"/var/lib/php\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
