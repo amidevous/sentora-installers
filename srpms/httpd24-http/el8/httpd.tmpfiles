@@ -1,0 +1,2 @@
+d $localstatedir/httpd   710 root apache
+d $localstatedir/httpd/htcacheclean   700 apache apache
