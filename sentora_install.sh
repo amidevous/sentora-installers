@@ -628,8 +628,8 @@ fi
 
 ## cp can be aliased to stop overwriting of files in centos use full path to cp
 /bin/cp -rf "$PANEL_PATH/sentora-core-$SENTORA_CORE_VERSION/." "$PANEL_PATH/panel/"
-rm sentora_core.zip
-rm "$PANEL_PATH/panel/LICENSE.md" "$PANEL_PATH/panel/README.md" "$PANEL_PATH/panel/.gitignore"
+rm -rf sentora_core.zip
+rm -rf "$PANEL_PATH/panel/LICENSE.md" "$PANEL_PATH/panel/README.md" "$PANEL_PATH/panel/.gitignore"
 rm -rf "$PANEL_PATH/_delete_me" "$PANEL_PATH/.gitignore"
 
 
@@ -675,7 +675,7 @@ done
 
 unzip -oq sentora_preconfig.zip
 /bin/cp -rf sentora-installers-$SENTORA_INSTALLER_VERSION/preconf/* $PANEL_CONF
-rm sentora_preconfig*
+rm -rf sentora_preconfig*
 rm -rf sentora-*
 
 #--- Prepare zsudo
