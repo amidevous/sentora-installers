@@ -1045,6 +1045,36 @@ if [[ "$OS" = "CentOs" ]]; then
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
     PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
     PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
+	cat > /usr/bin/php <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/php $@
+	EOF
+	cat > /usr/bin/phar <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/phar $@
+	EOF
+	cat > /usr/bin/phar.phar <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/phar.phar $@
+	EOF
+	cat > /usr/bin/php-cgi <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/php-cgi $@
+	EOF
+	cat > /usr/bin/php-config <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/php-config $@
+	EOF
+	cat > /usr/bin/phpize <<EOF
+	#!/usr/bin
+	source /opt/remi/php56/enable
+	/opt/remi/php56/root/usr/bin/phpize $@
+	EOF	
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	$PACKAGE_INSTALLER libpcre2-dev
