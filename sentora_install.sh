@@ -737,6 +737,11 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	dpkg -i mysql-apt-config_0.8.14-1_all.deb
 	rm -f mysql-apt-config_0.8.14-1_all.deb
 	apt-get update
+	mysqlpassword=$(passwordgen);
+	echo "mysql-community-server mysql-community-server/root-pass password $mysqlpassword" | /usr/bin/debconf-set-selections
+	echo "mysql-community-server mysql-community-server/re-root-pass password $mysqlpassword" | /usr/bin/debconf-set-selections
+	echo "mysql-community-server mysql-community-server/remove-data-dir boolean false" | /usr/bin/debconf-set-selections
+	echo "mysql-community-server mysql-community-server/data-dir note" | /usr/bin/debconf-set-selections
 	else
     export DEBIAN_FRONTEND=noninteractive
 	fi
@@ -764,9 +769,11 @@ fi
 service $DB_SERVICE start
 
 # setup mysql root password only if mysqlpassword is empty
+if [[ "$VER" != "16.04" || "$VER" != "18.04" ]]; then
 if [ -z "$mysqlpassword" ]; then
     mysqlpassword=$(passwordgen);
     mysqladmin -u root password "$mysqlpassword"
+fi
 fi
 
 # small cleaning of mysql access
