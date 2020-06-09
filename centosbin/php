@@ -1,0 +1,3 @@
+#!/bin/bash
+source /opt/remi/php56/enable
+/opt/remi/php56/root/usr/bin/php $@
