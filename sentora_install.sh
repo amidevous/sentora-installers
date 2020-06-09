@@ -1043,11 +1043,11 @@ elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	update-alternatives --set phar.phar /usr/bin/phar.phar5.6
 	update-alternatives --set phpize /usr/bin/phpize5.6
 	update-alternatives --set php-config /usr/bin/php-config5.6
-	a2enmod php7.0
-	a2enmod php7.1
-	a2enmod php7.2
-	a2enmod php7.3
-	a2enmod php7.4
+	a2dismod php7.0
+	a2dismod php7.1
+	a2dismod php7.2
+	a2dismod php7.3
+	a2dismod php7.4
 	a2enmod php5.6
 	phpenmod -v 5.6 mcrypt
 	else
