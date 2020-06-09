@@ -1041,40 +1041,46 @@ fi
 #--- PHP
 echo -e "\n-- Installing and configuring PHP"
 if [[ "$OS" = "CentOs" ]]; then
-    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php php56-php-devel php56-php-gd php56-php-mbstring php56-php-intl php56-php-mysql php56-php-xml php56-php-xmlrpc
+    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56 php56-runtime php56-php php56-php-devel php56-php-gd php56-php-mbstring php56-php-intl php56-php-mysql php56-php-xml php56-php-xmlrpc
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
     PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
     PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
 	cat > /usr/bin/php <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/php $@
 	EOF
+	chmod +x /usr/bin/php
 	cat > /usr/bin/phar <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/phar $@
 	EOF
+	chmod +x /usr/bin/phar
 	cat > /usr/bin/phar.phar <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/phar.phar $@
 	EOF
+	chmod +x /usr/bin/phar.phar
 	cat > /usr/bin/php-cgi <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/php-cgi $@
 	EOF
+	chmod +x /usr/bin/php-cgi
 	cat > /usr/bin/php-config <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/php-config $@
 	EOF
+	chmod +x /usr/bin/php-config
 	cat > /usr/bin/phpize <<EOF
-	#!/usr/bin
+	#!/bin/bash
 	source /opt/remi/php56/enable
 	/opt/remi/php56/root/usr/bin/phpize $@
-	EOF	
+	EOF
+	chmod +x /usr/bin/phpize
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	$PACKAGE_INSTALLER libpcre2-dev
