@@ -1,0 +1,9 @@
+$logdir/*log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /sbin/service $httpd_service reload > /dev/null 2>/dev/null || true
+    endscript
+}
