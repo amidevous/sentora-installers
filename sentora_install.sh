@@ -1045,41 +1045,17 @@ if [[ "$OS" = "CentOs" ]]; then
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
     PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
     PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
-	cat > /usr/bin/php <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/php $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/php -O /usr/bin/php
 	chmod +x /usr/bin/php
-	cat > /usr/bin/phar <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/phar $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phar -O /usr/bin/phar
 	chmod +x /usr/bin/phar
-	cat > /usr/bin/phar.phar <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/phar.phar $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phar.phar -O /usr/bin/phar.phar
 	chmod +x /usr/bin/phar.phar
-	cat > /usr/bin/php-cgi <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/php-cgi $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/php-cgi -O /usr/bin/php-cgi
 	chmod +x /usr/bin/php-cgi
-	cat > /usr/bin/php-config <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/php-config $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/php-config -O /usr/bin/php-config
 	chmod +x /usr/bin/php-config
-	cat > /usr/bin/phpize <<EOF
-	#!/bin/bash
-	source /opt/remi/php56/enable
-	/opt/remi/php56/root/usr/bin/phpize $@
-	EOF
+	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phpize -O /usr/bin/phpize
 	chmod +x /usr/bin/phpize
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
