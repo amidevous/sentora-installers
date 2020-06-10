@@ -813,7 +813,7 @@ else
 fi
 # Register mysql/mariadb service for autostart
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable "$DB_SERVICE".service
     else
         chkconfig "$DB_SERVICE" on
@@ -880,7 +880,7 @@ sed -i '/smtpd_bind_address/d' $PANEL_CONF/postfix/master.cf
 
 # Register postfix service for autostart (it is automatically started)
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable postfix.service
         # systemctl start postfix.service
     else
@@ -920,7 +920,7 @@ chmod 660 /var/log/dovecot*
 
 # Register dovecot service for autostart and start it
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable dovecot.service
         systemctl start dovecot.service
     else
@@ -1161,7 +1161,7 @@ fi
 
 # Register apache(+php) service for autostart and start it
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable "$HTTP_SERVICE.service"
         systemctl start "$HTTP_SERVICE.service"
     else
@@ -1216,7 +1216,7 @@ fi
 
 # Register proftpd service for autostart and start it
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable proftpd.service
         systemctl start proftpd.service
     else
@@ -1281,7 +1281,7 @@ rm -f $BIND_FILES/rndc.key
 
 # Register Bind service for autostart and start it
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable named.service
         systemctl start named.service
     else
@@ -1330,7 +1330,7 @@ chmod 644 "$CRON_FILE"
 
 # Register cron and atd services for autostart and start them
 if [[ "$OS" = "CentOs" ]]; then
-    if [[ "$VER" == "7" ]]; then
+    if [[ "$VER" == "7" || "$VER" == "8" ]]; then
         systemctl enable crond.service
         systemctl start crond.service
         systemctl start atd.service
@@ -1435,22 +1435,26 @@ chattr -i /etc/resolv.conf
 
 
 #--- Restart all services to capture output messages, if any
-if [[ "$OS" = "CentOs" && "$VER" == "7" ]]; then
-    # CentOs7 does not return anything except redirection to systemctl :-(
-    service() {
-       echo "Restarting $1"
-       systemctl restart "$1.service"
-    }
+if [[ "$OS" = "CentOs" && "$VER" == "7"  || "$OS" = "CentOs" && "$VER" == "8" ]]; then
+    systemctl restart "$DB_SERVICE.service"
+    systemctl restart "$HTTP_SERVICE.service"
+    systemctl restart "postfix.service"
+    systemctl restart "dovecot.service"
+    systemctl restart "$CRON_SERVICE.service"
+    systemctl restart "$BIND_SERVICE.service"
+    systemctl restart "proftpd.service"
+    systemctl restart "atd.service"
+else
+    service "$DB_SERVICE" restart
+    service "$HTTP_SERVICE" restart
+    service postfix restart
+    service dovecot restart
+    service "$CRON_SERVICE" restart
+    service "$BIND_SERVICE" restart
+    service proftpd restart
+    service atd restart
 fi
 
-service "$DB_SERVICE" restart
-service "$HTTP_SERVICE" restart
-service postfix restart
-service dovecot restart
-service "$CRON_SERVICE" restart
-service "$BIND_SERVICE" restart
-service proftpd restart
-service atd restart
 
 #--- Store the passwords for user reference
 {
