@@ -20,7 +20,7 @@
 # CentOS 6.*/7.*/8.* Minimal,
 # Fedora 31/32
 # Ubuntu server 12.04/14.04/16.4/18.04,
-# Debian 7.*/8.* 
+# Debian 7.*/8.*/9.*/10.*
 # 32bit and 64bit
 #
 # Contributions from:
@@ -39,7 +39,7 @@
 # 1.0.3 - example stable tag
 ##
 SENTORA_INSTALLER_VERSION="master"
-SENTORA_CORE_VERSION="1.0.1"
+SENTORA_CORE_VERSION="1.0.2"
 
 PANEL_PATH="/etc/sentora"
 PANEL_DATA="/var/sentora"
@@ -79,7 +79,7 @@ echo "Detected : $OS  $VER  $ARCH"
 if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" || "$VER" = "8" ) ||
       "$OS" = "Fedora" && ("$VER" = "31" || "$VER" = "32" ) ||
       "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "14.04" || "$VER" = "16.04" || "$VER" = "18.04" ) || 
-      "$OS" = "debian" && ("$VER" = "7" || "$VER" = "8" ) ]] ; then
+      "$OS" = "debian" && ("$VER" = "7" || "$VER" = "8" || "$VER" = "9" || "$VER" = "10" ) ]] ; then
     echo "Ok."
 else
     echo "Sorry, this OS is not supported by Sentora." 
@@ -140,7 +140,7 @@ elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
     
     DB_PCKG="mysql-server"
     HTTP_PCKG="apache2"
-	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+	if [[ "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then
     PHP_PCKG="apache2-mod-php5.6"
 	else
 	PHP_PCKG="apache2-mod-php5"
@@ -356,7 +356,7 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
     [ -f /etc/init.d/apparmor ]
     if [ $? = "0" ]; then
         echo -e "\n-- Disabling and removing AppArmor, please wait..."
-        /etc/init.d/apparmor stop &> /dev/null
+        service apparmor stop &> /dev/null
         update-rc.d -f apparmor remove &> /dev/null
         apt-get remove -y --purge apparmor* &> /dev/null
         disable_file /etc/init.d/apparmor &> /dev/null
@@ -367,9 +367,9 @@ fi
 #--- Adapt repositories and packages sources
 echo -e "\n-- Updating repositories and packages sources"
 if [[ "$OS" = "CentOs" || "$OS" = "Fedora" ]]; then
-#EPEL Repo Install
-$PACKAGE_INSTALLER -y install epel-release
     if [[ "$VER" = "6" || "$VER" = "7" || "$VER" = "8" ]]; then
+		#EPEL Repo Install
+		$PACKAGE_INSTALLER -y install epel-release
 		#To fix some problems of compatibility use of mirror centos.org to all users
 		#Replace all mirrors by base repos to avoid any problems.
 		sed -i 's|mirrorlist=http://mirrorlist.centos.org|#mirrorlist=http://mirrorlist.centos.org|' "/etc/yum.repos.d/CentOS-Base.repo"
@@ -478,6 +478,17 @@ deb-src http://httpredir.debian.org/debian $(lsb_release -sc)-updates main
 deb http://security.debian.org/ $(lsb_release -sc)/updates main
 deb-src http://security.debian.org/ $(lsb_release -sc)/updates main
 EOF
+	if [[ "$VER" == "9" || "$VER" == "10" ]]; then
+	apt-get update
+	apt-get -y install gnupg2 add-apt-key dirmngr wget
+	wget -O- "https://packages.sury.org/php/apt.gpg" | sudo apt-key add -
+	wget -O- "https://packages.sury.org/apache2/apt.gpg" | sudo apt-key add -
+	echo "deb https://packages.sury.org/apache2 $(lsb_release -sc) main" > /etc/apt/sources.list.d/apache2.list
+	echo "deb-src https://packages.sury.org/apache2 $(lsb_release -sc) main" >> /etc/apt/sources.list.d/apache2.list
+	echo "deb https://packages.sury.org/php $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
+	echo "deb-src https://packages.sury.org/php $(lsb_release -sc) main" >> /etc/apt/sources.list.d/php.list
+	apt-get update
+	fi
 fi
 
 #--- List all already installed packages (may help to debug)
@@ -738,11 +749,15 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	# https://bugs.launchpad.net/ubuntu/+source/mysql-5.7/+bug/1571865
 	# using mysql community server work
 	# https://dev.mysql.com/downloads/
-	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+	if [[ "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then
 	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/repo-codename select $(lsb_release -sc)" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/select-tools select" | /usr/bin/debconf-set-selections
-	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu" | /usr/bin/debconf-set-selections
+	if [[ "$OS" = "Ubuntu" ]]; then
+		echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu" | /usr/bin/debconf-set-selections
+	else
+		echo "mysql-apt-config mysql-apt-config/repo-distro select debian" | /usr/bin/debconf-set-selections
+	fi
 	echo "mysql-apt-config mysql-apt-config/select-server select mysql-5.7" | /usr/bin/debconf-set-selections
 	echo "mysql-apt-config mysql-apt-config/select-product select Apply" | /usr/bin/debconf-set-selections
 	export DEBIAN_FRONTEND=noninteractive
@@ -757,6 +772,7 @@ if [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	echo "mysql-community-server mysql-community-server/data-dir note" | /usr/bin/debconf-set-selections
 	else
     export DEBIAN_FRONTEND=noninteractive
+	apt-get -y dist-upgrade
 	fi
 fi
 
@@ -848,7 +864,7 @@ echo -e "\n-- Installing Postfix"
 if [[ "$OS" = "CentOs" || "$OS" = "Fedora" ]]; then
     $PACKAGE_INSTALLER postfix postfix-perl-scripts
     USR_LIB_PATH="/usr/libexec"
-elif [[ "$OS" = "Ubuntu" ]]; then
+elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
     $PACKAGE_INSTALLER postfix postfix-mysql
     USR_LIB_PATH="/usr/lib"
 fi
@@ -1022,7 +1038,7 @@ if [[ "$OS" = "CentOs" || "$OS" = "Fedora" ]]; then
     sed -i "s|DocumentRoot \"/var/www/html\"|DocumentRoot $PANEL_PATH/panel|" "$HTTP_CONF_PATH"
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
     # disable completely sites-enabled/000-default.conf
-    if [[ "$VER" = "14.04" || "$VER" = "8" || "$VER" == "16.04" || "$VER" == "18.04" ]]; then 
+    if [[ "$VER" = "14.04" || "$VER" = "8" || "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then 
         sed -i "s|IncludeOptional sites-enabled|#&|" "$HTTP_CONF_PATH"
     else
         sed -i "s|Include sites-enabled|#&|" "$HTTP_CONF_PATH"
@@ -1047,6 +1063,8 @@ if [[ ("$OS" = "CentOs" && "$VER" = "7") ||
       ("$OS" = "Ubuntu" && "$VER" = "16.04") ||  
       ("$OS" = "Ubuntu" && "$VER" = "18.04") || 
       ("$OS" = "debian" && "$VER" = "8") ]] ; then 
+      ("$OS" = "debian" && "$VER" = "9") ]] ; then 
+      ("$OS" = "debian" && "$VER" = "10") ]] ; then 
     # Order deny,allow / Deny from all   ->  Require all denied
     sed -i 's|Order deny,allow|Require all denied|I'  $PANEL_CONF/apache/httpd.conf
     sed -i '/Deny from all/d' $PANEL_CONF/apache/httpd.conf
@@ -1119,14 +1137,12 @@ elif [[ "$OS" = "Fedora" ]]; then
 	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phpize -O /usr/bin/phpize
 	chmod +x /usr/bin/phpize
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
-	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+	if [[ "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then
 	$PACKAGE_INSTALLER libpcre2-dev
-	$PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl php php-dev php5.6-dev
+	$PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl php
 	update-alternatives --set php /usr/bin/php5.6
 	update-alternatives --set phar /usr/bin/phar5.6
 	update-alternatives --set phar.phar /usr/bin/phar.phar5.6
-	update-alternatives --set phpize /usr/bin/phpize5.6
-	update-alternatives --set php-config /usr/bin/php-config5.6
 	a2dismod php7.0
 	a2dismod php7.1
 	a2dismod php7.2
@@ -1142,7 +1158,7 @@ elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
     elif [ "$VER" = "12.04" ]; then
         $PACKAGE_INSTALLER php5-suhosin
     fi
-	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+	if [[ "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then
 	PHP_INI_PATH="/etc/php/5.6/apache2/php.ini"
 	else
     PHP_INI_PATH="/etc/php5/apache2/php.ini"
@@ -1182,8 +1198,10 @@ sed -i "s|expose_php = On|expose_php = Off|" $PHP_INI_PATH
 # Build suhosin for PHP 5.x which is required by Sentora.
 if [[ "$OS" = "debian" || ( "$OS" = "Ubuntu" && "$VER" = "14.04" || "$VER" == "16.04" || "$VER" == "18.04") ]] ; then
     echo -e "\n# Building suhosin"
-		if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
+		if [[ "$VER" == "16.04" || "$VER" == "18.04" || "$VER" == "9" || "$VER" == "10" ]]; then
         $PACKAGE_INSTALLER php5.6-dev php-dev
+		update-alternatives --set phpize /usr/bin/phpize5.6
+		update-alternatives --set php-config /usr/bin/php-config5.6
 		else
         $PACKAGE_INSTALLER php5-dev
 		fi
@@ -1478,8 +1496,8 @@ if [[ "$OS" = "CentOs" && "$VER" == "6" ]]; then
 	sed -i 's|systemctl reload proftpd > /dev/null|service proftpd reload > /dev/null|' $PANEL_CONF/logrotate/Sentora-proftpd
 
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
-	sed -i 's|systemctl reload httpd > /dev/null|/etc/init.d/apache2 reload > /dev/null|' $PANEL_CONF/logrotate/Sentora-apache
-	sed -i 's|systemctl reload proftpd > /dev/null|/etc/init.d/proftpd force-reload > /dev/null|' $PANEL_CONF/logrotate/Sentora-proftpd
+	sed -i 's|systemctl reload httpd > /dev/null|service apache2 reload > /dev/null|' $PANEL_CONF/logrotate/Sentora-apache
+	sed -i 's|systemctl reload proftpd > /dev/null|service proftpd force-reload > /dev/null|' $PANEL_CONF/logrotate/Sentora-proftpd
 
 fi
 
