@@ -67,7 +67,7 @@ elif [ -f /etc/lsb-release ]; then
     VER=$(grep DISTRIB_RELEASE /etc/lsb-release | sed 's/^.*=//')
 elif [ -f /etc/os-release ]; then
     OS=$(grep -w ID /etc/os-release | sed 's/^.*=//')
-    VER=$(grep VERSION_ID /etc/os-release | sed 's/^.*"\(.*\)"/\1/')
+    VER=$(grep VERSION_ID /etc/os-release | sed 's/^.*"\(.*\)"/\1/' | head -n 1 | tail -n 1)
  else
     OS=$(uname -s)
     VER=$(uname -r)
@@ -82,9 +82,7 @@ if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" || "$VER" = "8" ) ||
       "$OS" = "debian" && ("$VER" = "7" || "$VER" = "8" || "$VER" = "9" || "$VER" = "10" ) ]] ; then
     echo "Ok."
 else
-    echo "Sorry, this OS is not supported by Sentora." 
-    echo "your OS and $OS"
-    echo "your version and $VER"
+    echo "Sorry, this OS is not supported by Sentora."
     exit 1
 fi
 
