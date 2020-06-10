@@ -936,6 +936,7 @@ if [[ "$OS" = "CentOs" ]]; then
     $PACKAGE_INSTALLER "$HTTP_PCKG-devel"
     HTTP_CONF_PATH="/etc/httpd/conf/httpd.conf"
     HTTP_VARS_PATH="/etc/sysconfig/httpd"
+    HTTPD_CONFD_PATH="/etc/httpd/conf.d"
     HTTP_SERVICE="httpd"
     HTTP_USER="apache"
     HTTP_GROUP="apache"
@@ -1049,10 +1050,20 @@ if [[ "$OS" = "CentOs" ]]; then
 	$PACKAGE_INSTALLER --enablerepo="PowerTools" libedit-devel
     fi
     $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56 php56-runtime php56-php php56-php-devel php56-php-gd php56-php-mbstring php56-php-intl php56-php-mysql php56-php-xml php56-php-xmlrpc
-    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin  #Epel packages
-    PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
-    PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
-    HTTPD_CONFD_PATH="/etc/httpd/conf.d"
+    $PACKAGE_INSTALLER --enablerepo="remi,remi-safe" php56-php-mcrypt php56-php-imap php56-php-suhosin
+    if [[ "$VER" == "8" ]]; then
+    	$PACKAGE_INSTALLER rpmdevtools yum-utils php56-build make php56-scldevel
+    	rpmdev-setuptree
+    	wget https://rpms.remirepo.net/SRPMS/php-suhosin-0.9.38-1.remi.src.rpm -O /root/rpmbuild/SRPMS/php56-php-suhosin-0.9.38-1.remi.src.rpm
+    	rpmbuild --define '_scl_prefix /opt/remi' --define 'vendor Remi Collet' --define 'dist .el8.remi' --define '_sclreq (remi)' --define 'packager http://blog.famillecollet.com/' --rebuild /root/rpmbuild/SRPMS/php56-php-suhosin-0.9.38-1.remi.src.rpm
+    	$PACKAGE_INSTALLER /root/rpmbuild/RPMS/x86_64/php56-php-suhosin-0.9.38-1.el8.remi.5.6.x86_64.rpm
+    	rm -rf /root/rpmbuild/RPMS/x86_64/php56-php-suhosin* /root/rpmbuild/SRPMS/php56-php-suhosin-0.9.38-1.remi.src.rpm
+    	PHP_INI_PATH="/etc/opt/remi/php56/php.ini"
+    	PHP_EXT_PATH="/etc/opt/remi/php56/php.d"	
+    else
+    	PHP_INI_PATH="/opt/remi/php56/root/etc/php.ini"
+    	PHP_EXT_PATH="/opt/remi/php56/root/etc/php.d"
+    fi
 	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/php -O /usr/bin/php
 	chmod +x /usr/bin/php
 	wget https://github.com/amidevous/sentora-installers/raw/master/centosbin/phar -O /usr/bin/phar
@@ -1108,7 +1119,7 @@ chmod +t "$PANEL_DATA/sessions"
 
 if [[ "$OS" = "CentOs" ]]; then
     # Remove session & php values from apache that cause override
-    sed -i "/php_value/d" $HTTPD_CONFD_PATH/php.conf
+    sed -i "/php_value/d" $HTTPD_CONFD_PATH/php56-php.conf
 elif [[ "$OS" = "Ubuntu" || "$OS" = "debian" ]]; then
 	if [[ "$VER" == "16.04" || "$VER" == "18.04" ]]; then
 	sed -i "s|;session.save_path = \"/var/lib/php\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
