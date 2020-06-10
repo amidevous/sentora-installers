@@ -480,9 +480,10 @@ deb-src http://security.debian.org/ $(lsb_release -sc)/updates main
 EOF
 	if [[ "$VER" == "9" || "$VER" == "10" ]]; then
 	apt-get update
-	apt-get -y install gnupg2 add-apt-key dirmngr wget
-	wget -O- "https://packages.sury.org/php/apt.gpg" | sudo apt-key add -
-	wget -O- "https://packages.sury.org/apache2/apt.gpg" | sudo apt-key add -
+	apt-get -y install gnupg2 dirmngr wget
+	wget -O- "https://packages.sury.org/php/apt.gpg" | apt-key add -
+	wget -O- "https://packages.sury.org/apache2/apt.gpg" | apt-key add -
+	wget -O- "B188E2B695BD4743"
 	echo "deb https://packages.sury.org/apache2 $(lsb_release -sc) main" > /etc/apt/sources.list.d/apache2.list
 	echo "deb-src https://packages.sury.org/apache2 $(lsb_release -sc) main" >> /etc/apt/sources.list.d/apache2.list
 	echo "deb https://packages.sury.org/php $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
