@@ -483,7 +483,6 @@ EOF
 	apt-get -y install gnupg2 dirmngr wget
 	wget -O- "https://packages.sury.org/php/apt.gpg" | apt-key add -
 	wget -O- "https://packages.sury.org/apache2/apt.gpg" | apt-key add -
-	wget -O- "B188E2B695BD4743"
 	echo "deb https://packages.sury.org/apache2 $(lsb_release -sc) main" > /etc/apt/sources.list.d/apache2.list
 	echo "deb-src https://packages.sury.org/apache2 $(lsb_release -sc) main" >> /etc/apt/sources.list.d/apache2.list
 	echo "deb https://packages.sury.org/php $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
