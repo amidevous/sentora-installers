@@ -83,6 +83,8 @@ if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" || "$VER" = "8" ) ||
     echo "Ok."
 else
     echo "Sorry, this OS is not supported by Sentora." 
+    echo "your OS and $OS"
+    echo "your version and $VER"
     exit 1
 fi
 
